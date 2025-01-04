@@ -8,12 +8,20 @@ option(ENABLE_LTO "Enables link-time optimization, requires compiler support." O
 option(ENABLE_TESTS "Enables building the test project, requires AWS C++ SDK." OFF)
 option(ENABLE_SANITIZERS "Enables ASan and UBSan." OFF)
 
-add_library(${PROJECT_NAME}
+# Include the source files for the library
+set(SOURCE_FILES  
     "src/logging.cpp"
     "src/runtime.cpp"
     "src/backward.cpp"
     "${CMAKE_CURRENT_BINARY_DIR}/version.cpp"
-    )
+)
+
+if (MSVC)
+	# Create a shared library (DLL) for AWS Lambda Runtime
+	add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
+else()
+	add_library(${PROJECT_NAME} ${SOURCE_FILES})
+endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     SOVERSION 0
@@ -37,6 +45,9 @@ if (ENABLE_LTO)
         message(WARNING "Link-time optimization (LTO) is not supported: ${lto_check_output}")
     endif()
 endif()
+
+# Specify where to look for custom modules like FindCURL.cmake
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
 find_package(CURL REQUIRED)
 if (CMAKE_VERSION VERSION_LESS 3.12)
@@ -70,17 +81,40 @@ else()
     add_definitions(-Dno_backtrace)
 endif()
 
-
-target_compile_options(${PROJECT_NAME} PRIVATE
-    "-fno-exceptions"
-    "-fno-rtti"
-    "-fvisibility=hidden"
-    "-fvisibility-inlines-hidden"
-    "-Wall"
-    "-Wextra"
-    "-Werror"
-    "-Wconversion"
-    "-Wno-sign-conversion")
+if (MSVC)
+	# Enable shared libraries by default
+	set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries" FORCE)
+	
+	# Set properties for the shared library
+	set_target_properties(${PROJECT_NAME} PROPERTIES
+		RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin    # Output directory for the DLL
+		ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib    # Output directory for the static library (LIB)
+	)
+	
+	# Set the location of the import library (LIB)
+	set_target_properties(${PROJECT_NAME} PROPERTIES
+		IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/lib/aws-lambda-runtime.lib)
+		
+	target_compile_definitions(${PROJECT_NAME} PRIVATE
+		BUILDING_LIBRARY
+		_CRT_SECURE_NO_WARNINGS)
+	
+	target_compile_options(${PROJECT_NAME} PRIVATE 
+        /EHsc       # Equivalent to -fno-exceptions
+		/W4         # Equivalent to -Wall and -Wextra
+        /WX)        # Equivalent to -Werror
+else()
+	target_compile_options(${PROJECT_NAME} PRIVATE
+		"-fno-exceptions"
+		"-fno-rtti"
+		"-fvisibility=hidden"
+		"-fvisibility-inlines-hidden"
+		"-Wall"
+		"-Wextra"
+		"-Werror"
+		"-Wconversion"
+		"-Wno-sign-conversion")
+endif()
 
 if (LOG_VERBOSITY)
     target_compile_definitions(${PROJECT_NAME} PRIVATE "AWS_LAMBDA_LOG=${LOG_VERBOSITY}")

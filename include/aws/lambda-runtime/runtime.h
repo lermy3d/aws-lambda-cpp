@@ -22,6 +22,16 @@
 #include "aws/lambda-runtime/outcome.h"
 #include "aws/http/response.h"
 
+#ifdef _MSC_VER
+#    ifdef BUILDING_LIBRARY
+#        define AWS_LAMBDA_RUNTIME_API __declspec(dllexport)
+#    else
+#        define AWS_LAMBDA_RUNTIME_API __declspec(dllimport)
+#    endif
+#else
+#    define AWS_LAMBDA_RUNTIME_API __attribute__((visibility("default")))
+#endif
+
 namespace aws {
 namespace lambda_runtime {
 
@@ -105,12 +115,14 @@ public:
     /**
      * Create a successful invocation response with the given payload and content-type.
      */
+    AWS_LAMBDA_RUNTIME_API
     static invocation_response success(std::string payload, std::string content_type);
 
     /**
      * Create a failure response with the given error message and error type.
      * The content-type is always set to application/json in this case.
      */
+    AWS_LAMBDA_RUNTIME_API
     static invocation_response failure(std::string const& error_message, std::string const& error_type);
 
     /**
@@ -174,6 +186,7 @@ inline std::chrono::milliseconds invocation_request::get_time_remaining() const
 }
 
 // Entry method
+AWS_LAMBDA_RUNTIME_API
 void run_handler(std::function<invocation_response(invocation_request const&)> const& handler);
 
 } // namespace lambda_runtime

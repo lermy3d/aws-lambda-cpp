@@ -17,8 +17,6 @@
 #include <cstdio>
 #include <chrono>
 
-#define LAMBDA_RUNTIME_API __attribute__((visibility("default")))
-
 namespace aws {
 namespace logging {
 

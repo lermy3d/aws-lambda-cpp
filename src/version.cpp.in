@@ -13,7 +13,15 @@
  * permissions and limitations under the License.
  */
 
-#define AWS_LAMBDA_RUNTIME_API __attribute__((visibility("default")))
+#ifdef _MSC_VER
+#    ifdef BUILDING_LIBRARY
+#        define AWS_LAMBDA_RUNTIME_API __declspec(dllexport)
+#    else
+#        define AWS_LAMBDA_RUNTIME_API __declspec(dllimport)
+#    endif
+#else
+#    define AWS_LAMBDA_RUNTIME_API __attribute__((visibility("default")))
+#endif
 
 namespace aws {
 namespace lambda_runtime {

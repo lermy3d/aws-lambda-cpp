@@ -16,6 +16,22 @@
 
 #include <cstdarg>
 
+#ifdef _MSC_VER
+#    define ATTRIBUTE_GNU_FORMAT
+#else
+#    define ATTRIBUTE_GNU_FORMAT [[gnu::format(printf, 2, 3)]]
+#endif
+
+#ifdef _MSC_VER
+#    ifdef BUILDING_LIBRARY
+#        define LAMBDA_RUNTIME_API __declspec(dllexport)
+#    else
+#        define LAMBDA_RUNTIME_API __declspec(dllimport)
+#    endif
+#else
+#    define LAMBDA_RUNTIME_API __attribute__((visibility("default")))
+#endif
+
 namespace aws {
 namespace logging {
 
@@ -25,9 +41,9 @@ enum class verbosity {
     debug,
 };
 
-void log(verbosity v, char const* tag, char const* msg, va_list args);
+LAMBDA_RUNTIME_API void log(verbosity v, char const* tag, char const* msg, va_list args);
 
-[[gnu::format(printf, 2, 3)]] inline void log_error(char const* tag, char const* msg, ...)
+ATTRIBUTE_GNU_FORMAT inline void log_error(char const* tag, char const* msg, ...)
 {
     va_list args;
     va_start(args, msg);
@@ -37,7 +53,7 @@ void log(verbosity v, char const* tag, char const* msg, va_list args);
     (void)msg;
 }
 
-[[gnu::format(printf, 2, 3)]] inline void log_info(char const* tag, char const* msg, ...)
+ATTRIBUTE_GNU_FORMAT inline void log_info(char const* tag, char const* msg, ...)
 {
 #if AWS_LAMBDA_LOG >= 1
     va_list args;
@@ -50,7 +66,7 @@ void log(verbosity v, char const* tag, char const* msg, va_list args);
 #endif
 }
 
-[[gnu::format(printf, 2, 3)]] inline void log_debug(char const* tag, char const* msg, ...)
+ATTRIBUTE_GNU_FORMAT inline void log_debug(char const* tag, char const* msg, ...)
 {
 #if AWS_LAMBDA_LOG >= 2
     va_list args;
