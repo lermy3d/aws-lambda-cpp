@@ -13,12 +13,30 @@ if(NOT CURL_INCLUDE_DIRS)
 endif()
 
 if(NOT CURL_LIBRARIES)
-    set(CURL_LIBRARIES "${CURL_ENV}/install/bin/libcurl.dll")
+    # Check if the platform is Windows
+    if(WIN32)
+        # On Windows, use the .dll library
+        set(CURL_LIBRARIES "${CURL_ENV}/install/bin/libcurl.dll")
+    elseif(UNIX)
+        # On UNIX (Linux/macOS), use the .so library
+        set(CURL_LIBRARIES "${CURL_ENV}/install/lib/libcurl.so")
+    else()
+        # Handle other platforms
+        message(WARNING "Unsupported platform for CURL linking.")
+    endif()
 endif()
 
 # Check if the import library (for linking to the DLL) exists
 if(NOT CURL_IMPORT_LIB)
-    set(CURL_IMPORT_LIB "${CURL_ENV}/install/lib/libcurl_imp.lib")
+	if(WIN32)
+		set(CURL_IMPORT_LIB "${CURL_ENV}/install/lib/libcurl_imp.lib")
+	elseif(UNIX)
+        # On UNIX (Linux/macOS), use the .so library
+        set(CURL_IMPORT_LIB "${CURL_ENV}/install/lib/libcurl.a")
+    else()
+        # Handle other platforms
+        message(WARNING "Unsupported platform for CURL linking.")
+    endif()
 endif()
 
 # Check that the CURL headers and library paths are valid
