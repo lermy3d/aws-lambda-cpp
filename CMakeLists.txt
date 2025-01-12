@@ -16,12 +16,7 @@ set(SOURCE_FILES
     "${CMAKE_CURRENT_BINARY_DIR}/version.cpp"
 )
 
-if (MSVC)
-	# Create a shared library (DLL) for AWS Lambda Runtime
-	add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
-else()
-	add_library(${PROJECT_NAME} ${SOURCE_FILES})
-endif()
+add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     SOVERSION 0
