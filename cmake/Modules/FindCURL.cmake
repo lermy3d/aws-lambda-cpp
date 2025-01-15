@@ -60,7 +60,7 @@ set(CURL_IMPORT_LIB ${CURL_IMPORT_LIB} CACHE STRING "CURL import library for DLL
 # Create a target for CURL::libcurl that links to the import library
 add_library(CURL::libcurl UNKNOWN IMPORTED)
 set_target_properties(CURL::libcurl PROPERTIES
-  IMPORTED_LOCATION "${CURL_IMPORT_LIB}"
+  IMPORTED_LOCATION "${CURL_ENV}/install/lib"
   INTERFACE_INCLUDE_DIRECTORIES "${CURL_INCLUDE_DIRS}"
 )
 
